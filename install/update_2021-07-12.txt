@@ -1,0 +1,8 @@
+// INSTALAR LIB FFMPEG
+sudo apt-get update
+sudo apt-get install ffmpeg
+
+// ACTUALIZAR APP
+cd /ids-projects/camera-py
+git pull 
+sudo pm2 restart all 

@@ -1,0 +1,10 @@
+numpy
+Cython
+python-socketio[client]==4.6.1
+requests
+filterpy
+onnxruntime
+insightface
+pandas
+protobuf
+opencv-python

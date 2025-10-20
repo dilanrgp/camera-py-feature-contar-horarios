@@ -1,0 +1,77 @@
+// CERTIFICADO SSL
+cd /home/ladorian/.ssh
+// si el directorio no existe
+    # ssh-keygen    // darle al intro sin rellenar nada hasta que finalice el procesos
+    # cd /home/ladorian/.ssh
+    # rm -rf *
+wget https://websites.ladorianids.com/rekognition/ssh.zip
+unzip ssh.zip
+rm -rf ssh.zip
+
+chmod 600 id_rsa
+chmod 644 id_rsa.pub
+chmod 644 config
+
+// PYTHON
+python --version     //debe ser 3.7
+// si aun no está instalado
+    # sudo apt-get install python3.7  
+    # sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.7 1
+    # sudo apt install python-pip
+pip install --upgrade pip
+pip install setuptools
+python --version     //comprobar que sea la version 3.7
+
+// INSTALAR LIB TPU
+// Sin conectar la TPU
+echo "deb https://packages.cloud.google.com/apt coral-edgetpu-stable main" | sudo tee /etc/apt/sources.list.d/coral-edgetpu.list
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+sudo apt-get update
+sudo apt-get install libedgetpu1-std
+// Conectar TPU
+
+// INSTALAR LIB FFMPEG
+sudo apt-get update
+sudo apt-get install ffmpeg
+
+// INSTALAR TENSORFLOW
+lscpu // para ver modelo del procesador ->  Si es x86_64 y la version de python es 3.7
+pip install https://github.com/google-coral/pycoral/releases/download/release-frogfish/tflite_runtime-2.5.0-cp37-cp37m-linux_x86_64.whl
+
+// APP CAMERA
+cd /home/ladorian/ids-projects/
+// si el directorio no existe
+    # cd /home/ladorian/
+    # mkdir ids-projects
+    # cd ids-projects
+sudo apt install git
+git clone git@gitlab.com:ladorian/camera-py.git
+cd camera-py
+pip install -r requirements.txt
+
+// CRON USER
+# Crear tareas CRON para App comandos
+line="@reboot cd /home/ladorian/ids-projects/camera-py && git pull "
+(crontab -l; echo "$line" ) | crontab -
+
+line="0 */6 * * * cd /home/ladorian/ids-projects/camera-py && git pull"
+(crontab -l; echo "$line" ) | crontab -
+
+// CRON ROOT
+line="0 0 * * * /sbin/reboot"
+(sudo crontab -l; echo "$line" ) | crontab -
+
+// PM2 - Gestor de procesos
+sudo apt install npm
+sudo npm install pm2 -g
+sudo pm2 install pm2-logrotate
+sudo pm2 start main.py --name camera-py --interpreter python -- email_camera@ladorian.com
+sudo pm2 startup
+sudo pm2 save
+
+// NO USAR
+# sudo pm2 unstartup systemd
+
+# QUITAR PASSWORD con SUDO
+sudo visado
+Ladorian ALL=(ALL:ALL) NOPASSWD:ALL
