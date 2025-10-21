@@ -6,7 +6,7 @@ FACE_LEAVE_TIME = 5
 
 
 class FaceTrajectory():
-    def __init__(self, face, face_id, face_box, face_conf):        
+    def __init__(self, face, face_id, face_box, face_conf, face_embedding,gender_insightface,age_insightface):        
         self.face_box = face_box
         self.first_face = face
         self.last_face = face
@@ -15,6 +15,10 @@ class FaceTrajectory():
         self.gender = None
         self.age = None
         self.face_conf = face_conf
+        # insightface
+        self.face_embedding = face_embedding
+        self.gender_insightface = gender_insightface
+        self.age_insightface = age_insightface
 
         self.first_time = time.time()
         self.last_time = time.time()
