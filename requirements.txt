@@ -1,10 +1,6 @@
 numpy
-Cython
+opencv-python==4.5.2.52
 python-socketio[client]==4.6.1
 requests
+scikit-learn==0.22.2
 filterpy
-onnxruntime
-insightface
-pandas
-protobuf
-opencv-python

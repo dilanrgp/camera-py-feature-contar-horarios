@@ -1,11 +1,5 @@
 .idea
 config.ini
-config_detector.ini
 video
 image
 __pycache__
-env
-*.pkl
-*.avi
-*.mp4
-.coverage

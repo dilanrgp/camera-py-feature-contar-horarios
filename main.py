@@ -3,7 +3,6 @@ import datetime
 import requests
 import hashlib
 import socketio
-from device import Device
 import json
 import time
 import sys
@@ -32,17 +31,11 @@ def readConfig():
     try:
         with open('config.ini') as json_file:
             data = json.load(json_file)
-        with open('config_detector.ini') as json_file:
-            data_detector = json.load(json_file)
-    except Exception as e:
-        print(e)
-        data= {}
-        with open('config_detector.ini') as json_file:
-            data_detector = json.load(json_file)
+    except:
+        data = {}
         data['email'] = ''
-        print('Falta archivo de configuración')
 
-    return data,data_detector
+    return data
 
 
 def saveConfig(config_data):
@@ -53,11 +46,10 @@ def saveConfig(config_data):
         print('Write Exception')
 
 
-config,data_detector = readConfig()
+config = readConfig()
 
-sio = socketio.Client(False)
-#le añado pasarle la config en el init para uso local
-camera_thread = CameraThread(config,data_detector)
+sio = socketio.Client()
+camera_thread = CameraThread()
 
 def generateKeyHash():
     dt = datetime.datetime.now()
@@ -78,23 +70,12 @@ def sendError(message):
     }
     sio.emit('send:message', send_data)
 
-def reboot():
-    try:
-        if camera_thread.is_alive():
-            camera_thread.stopStream()
-            camera_thread.stop()
-    except:
-        print("Close camara thread ERROR")
-
-    #Device.reboot()
-
 def reconnect():
     try:
         print('2. Connection Start')
         sio.connect('https://pusher.ladorianids.com')
     except:
-        print('Socket exception')
-        #sio = socketio.Client(False)
+        print('Socket is not opened')
         t = Timer(10.0, reconnect)
         t.start()
 
@@ -112,25 +93,22 @@ def startProc():
 
 @sio.event
 def connect():
+    # print("conexión con exito")
     print('3. Socket is connected = ', sio.sid)
-    if camera_thread.is_alive():
-        camera_thread.stopStream()
-
     startProc()
 
 @sio.event
 def connect_error():
     print("Socket connection failed!")
+    if camera_thread.isAlive():
+        camera_thread.stop()
 
-    t = Timer(5.0, reconnect)
-    t.start()
+    t = Timer(120.0, reconnect)
+    t.start()  # after 120 seconds, connect again
 
 @sio.event
 def disconnect():
     print("I'm disconnected!")
-
-    t = Timer(5.0, reconnect)
-    t.start()
 
 
 @sio.on('message')
@@ -164,7 +142,7 @@ def on_message(data):
             'powers': channel_config['powers'],
             'holidays': [],
         }
-        if camera_thread.is_alive() and channel_config is not None:
+        if camera_thread.isAlive() and channel_config is not None:
             data_obj['status'] = True
         else:
             data_obj['status'] = False
@@ -191,7 +169,7 @@ def on_message(data):
             'powers': channel_config['powers'],
             'holidays': [],
         }
-        if camera_thread.is_alive() and channel_config is not None:
+        if camera_thread.isAlive() and channel_config is not None:
             data_obj['status'] = True
         else:
             data_obj['status'] = False
@@ -207,21 +185,21 @@ def on_message(data):
 
 
     if data.get('name') and data['name'] == 'streaming:open':
-        # URL donde se manda el streaming de vídeo
-        rtmp_key = camera_thread.startStream(sio.sid)
-        flv_url = 'https://streaming.ladorianids.es/flv?port=1935&app=live&stream=' + rtmp_key
+        rtmp_url = 'rtmp://streaming.ladorianids.es:1935/live/' + sio.sid
+        hls_url = 'https://streaming.ladorianids.es/hls/' + sio.sid + '.m3u8'
 
+        camera_thread.startStream(rtmp_url)
         exists = False
-        # while exists == False:
-        #     print("no existe")
-        #     exists = uri_exists_stream(flv_url)
+        while exists == False:
+            print("no existe")
+            exists = uri_exists_stream(hls_url)
 
         print("Ya existe")
         send_data = {
             'from': sio.sid,
             'to': data['from'],
             'name': 'streaming:opened',
-            'data': flv_url
+            'data': hls_url
         }
         sio.emit('send:message', send_data)
 
@@ -262,15 +240,16 @@ def auth(data):
     # join channel
     sio.emit('join:room', 'camera.id.' + str(channel_config['idcamera']))
     sio.emit('join:room', 'camera.customer.' + str(channel_config['customer']['idcustomer']))
-    sio.emit('join:room', 'camera.site.' + str(channel_config['site']['idsite']))
+    sio.emit('join:room', 'camera.idsite.' + str(channel_config['site']['idsite']))
     sio.emit('join:room', 'camera.email.' + channel_config['email'])
-    
+    sio.emit('join:room', 'camera.id.' + str(channel_config['idcamera']))
+
     camera_thread.setThreadInfo(sio, channel_config)
-    if not camera_thread.is_alive():
+    if not camera_thread.isAlive():
         camera_thread.start()
 
     # if activated
-    if camera_thread.is_alive():
+    if camera_thread.isAlive():
         send_data = {
             'from': sio.sid,
             'to': 'ids.ladorian.camera',
@@ -278,5 +257,6 @@ def auth(data):
             'message': 'device is activated'
         }
         sio.emit('send:message', send_data)
+
 reconnect()
-print("End Program")
+# print("End Program")

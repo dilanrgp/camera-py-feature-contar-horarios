@@ -1,8 +1,5 @@
 import numpy as np
-from linear_assignment import linear_assignment
-
-# Return the current time
-
+from sklearn.utils.linear_assignment_ import linear_assignment
 
 def iou(bb_test, bb_gt):
     """

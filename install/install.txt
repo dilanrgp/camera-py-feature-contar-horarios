@@ -50,28 +50,23 @@ cd camera-py
 pip install -r requirements.txt
 
 // CRON USER
-# Crear tareas CRON para App comandos
-line="@reboot cd /home/ladorian/ids-projects/camera-py && git pull "
-(crontab -l; echo "$line" ) | crontab -
-
-line="0 */6 * * * cd /home/ladorian/ids-projects/camera-py && git pull"
-(crontab -l; echo "$line" ) | crontab -
+crontab -e
+// Copiar y pegar
+10 */6 * * * cd /home/ladorian/ids-projects/camera-py && git pull
+// Guardar y salir
 
 // CRON ROOT
-line="0 0 * * * /sbin/reboot"
-(sudo crontab -l; echo "$line" ) | crontab -
+sudo crontab -e
+// Copiar y pegar
+0 0 * * * /sbin/reboot
+// Guardar y salir
 
 // PM2 - Gestor de procesos
 sudo apt install npm
 sudo npm install pm2 -g
-sudo pm2 install pm2-logrotate
 sudo pm2 start main.py --name camera-py --interpreter python -- email_camera@ladorian.com
 sudo pm2 startup
 sudo pm2 save
 
 // NO USAR
 # sudo pm2 unstartup systemd
-
-# QUITAR PASSWORD con SUDO
-sudo visado
-Ladorian ALL=(ALL:ALL) NOPASSWD:ALL
